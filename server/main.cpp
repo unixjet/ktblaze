@@ -1,104 +1,117 @@
 #include <QCoreApplication>
 #include <iostream>
-
-#include <boost/asio.hpp>
-#include <boost/bind.hpp>
-#include <boost/shared_ptr.hpp>
+#include <boost/function.hpp>
 #include <boost/thread.hpp>
-#include <boost/thread/mutex.hpp>
-#include <boost/lexical_cast.hpp>
+#include <boost/bind.hpp>
+#include <boost/asio.hpp>
+#include <boost/shared_ptr.hpp>
+#include <boost/enable_shared_from_this.hpp>
 
-boost::mutex global_stream_lock;
+using namespace boost::asio;
+using namespace boost::posix_time;
 
+io_service service;
 
-void WorkerThread(boost::shared_ptr<boost::asio::io_service> iosvc, int counter)
+#define MEM_FN(x)      boost::bind(&self_type::x, shared_from_this());
+#define MEM_FN1(x,y)   boost::bind(&self_type::x, shared_from_this(),y)
+#define MEM_FN2(x,y,z) boost::bind(&self_type::x, shared_from_this(), y, z)
+
+class talk_to_client : public boost::enable_shared_from_this<talk_to_client>, boost::noncopyable
 {
-    global_stream_lock.lock();
-    std::cout << "Thread " << counter << "Start.\n";
-    global_stream_lock.unlock();
+    typedef talk_to_client self_type;
+    talk_to_client():sock_(service), started_(false) {}
+public:
+    typedef boost::system::error_code error_code;
+    typedef boost::shared_ptr<talk_to_client> ptr;
 
-    while(true)
+    void start()
     {
-        try
-        {
-            boost::system::error_code ec;
-            iosvc->run(ec);
-            if(ec)
-            {
-                global_stream_lock.lock();
-                std::cout << "Message: " << ec << ".\n" ;
-                global_stream_lock.unlock();
-            }
-            break;
-        }
-        catch(std::exception &ex)
-        {
-            global_stream_lock.lock();
-            std::cout << "Message: " << ex.what() << ".\n";
-            global_stream_lock.unlock();
-        }
+        started_ = true;
+        do_read();
     }
-    global_stream_lock.lock();
-    std::cout << "Thread " << counter << "End.\n";
-    global_stream_lock.unlock();
+
+    static ptr new_()
+    {
+        ptr new_(new talk_to_client());
+        return new_;
+    }
+
+    void stop()
+    {
+        if (!started_) return ;
+        started_ = false;
+        sock_.close();
+    }
+
+    ip::tcp::socket & sock() { return sock_;}
+
+private:
+    void on_read(const error_code & err, size_t bytes)
+    {
+        if (!err)
+        {
+            std::string msg(read_buffer_, bytes);
+            do_write(msg + "\n");
+        }
+        stop();
+    }
+
+    void on_write(const error_code &err, size_t bytes)
+    {
+        do_read();
+    }
+
+    void do_read()
+    {
+        async_read(sock_, buffer(read_buffer_),
+                   MEM_FN2(read_complete, _1, _2), MEM_FN2(on_read, _1, _2));
+    }
+
+    void do_write(const std::string & msg)
+    {
+        std::cout << "Server Echo " << msg  << std::endl;
+        std::copy(msg.begin(), msg.end(), write_buffer_);
+        sock_.async_write_some(buffer(write_buffer_,msg.size()),
+                               MEM_FN2(on_write, _1, _2));
+    }
+
+    size_t read_complete(const boost::system::error_code & err, size_t bytes)
+    {
+           if ( err) return 0;
+           bool found = std::find(read_buffer_, read_buffer_ + bytes, '\n') < read_buffer_ + bytes;
+           // we read one-by-one until we get to enter, no buffering
+           return found ? 0 : 1;
+       }
+
+private:
+    ip::tcp::socket sock_;
+    enum { max_msg = 1024 };
+    char read_buffer_[max_msg];
+    char write_buffer_[max_msg];
+    bool started_;
+
+};
+
+ip::tcp::acceptor acceptor(service, ip::tcp::endpoint(ip::tcp::v4(), 8001));
+
+void handle_accept(talk_to_client::ptr client, const boost::system::error_code & err)
+{
+    client->start();
+    talk_to_client::ptr new_client = talk_to_client::new_();
+    acceptor.async_accept(new_client->sock(), boost::bind(handle_accept, new_client, _1));
 }
+
 
 int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
+    std::cout << "Server Run" << std::endl;
+    talk_to_client::ptr client = talk_to_client::new_();
+    acceptor.async_accept(client->sock(), boost::bind(handle_accept, client, _1));
+    service.run();
 
-    boost::shared_ptr<boost::asio::io_service> io_svc(
-            new boost::asio::io_service
-        );
-
-    boost::shared_ptr<boost::asio::io_service::work> worker
-            (new boost::asio::io_service::work(*io_svc));
-    boost::shared_ptr<boost::asio::io_service::strand> strand
-            (new boost::asio::io_service::strand(*io_svc));
-
-    global_stream_lock.lock();
-    std::cout << "Press ENTER to exit!\n";
-    global_stream_lock.unlock();
-
-    boost::thread_group threads;
-    for(int i=1; i<=2; i++)
-        threads.create_thread(boost::bind(&WorkerThread, io_svc, i));
-
-    boost::asio::ip::tcp::socket sckt(*io_svc);
-
-    try
-    {
-        boost::asio::ip::tcp::resolver resolver(*io_svc);
-        boost::asio::ip::tcp::resolver::query query("www.packtpub.com",
-            boost::lexical_cast<std::string>(80)
-        );
-
-        boost::asio::ip::tcp::resolver::iterator iterator = resolver.resolve(query);
-        boost::asio::ip::tcp::endpoint endpoint = *iterator;
-
-        global_stream_lock.lock();
-        std::cout << "Connecting to: " << endpoint << std::endl;
-        global_stream_lock.unlock();
-
-        sckt.connect(endpoint);
-    }
-    catch(std::exception &ex)
-    {
-        global_stream_lock.lock();
-        std::cout << "Message: " << ex.what() << ".\n";
-        global_stream_lock.unlock();
-    }
-
-    std::cin.get();
-
-    boost::system::error_code ec;
-    sckt.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
-    sckt.close(ec);
-
-    io_svc->stop();
-
-    threads.join_all();
-
+//    std::bind(output, 2, std::placeholders::_2)(1,3,6);
+    std::cout << "Server Stop" << std::endl;
     return a.exec();
 }
 
