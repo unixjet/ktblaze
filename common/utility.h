@@ -3,6 +3,7 @@
 
 #include <string>
 
+
 namespace utility
 {
   std::string to_string(const std::wstring& str);

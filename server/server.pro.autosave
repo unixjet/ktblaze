@@ -32,7 +32,7 @@ BOOST_LIBSPATH=$$BOOST_DIR\stage\qt-mingw32\lib
 #QMAKE_CXXFLAGS +=-Wno-used-variable -Wno-used-parameter
 QMAKE_CXXFLAGS +=-march=i686
 QMAKE_CXXFLAGS -=-fpermissive
-QMAKE_CXXFLAGS_CXX11 =-std=c++0x
+QMAKE_CXXFLAGS_CXX11 =-std=c++11
 INCLUDEPATH += $$BOOST_DIR
 
 LIBS +=-L$$BOOST_LIBSPATH

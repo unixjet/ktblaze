@@ -240,11 +240,12 @@ void WorkBook::FormatCell(xlsCell *cell, cellContent& content) const
 	uint32_t col = cell->col;
 #define FORCE_WSTRING_2_STRING 1
 #if FORCE_WSTRING_2_STRING == 1
+    content.str = char2string(cell->str);
     {
-        std::cout << "parse " << utility::to_string(std::wstring(reinterpret_cast<wchar_t*>(cell->str))) << std::endl;
+        std::cout << "parse " <<  content.str << std::endl;
 
     }
-    content.str = char2string(cell->str);
+
 #else
     content.str = char2string(cell->str);
 #endif

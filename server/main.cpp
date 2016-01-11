@@ -3,6 +3,7 @@
 #include <talk_to_client.h>
 #include "XlsReader.h"
 #include "logger.hpp"
+#include "utility.h"
 
 
 boost::asio::io_service service;
@@ -44,9 +45,11 @@ int main(int argc, char *argv[])
     BOOST_LOG_SEV(slg, warning) << "A warning severity message, will pass to the file";
     BOOST_LOG_SEV(slg, error) << "An error severity message, will pass to the file";
 
-#if 1
-    std::string file = std::string("E:\\mgzhou\\WorkSpace\\Project\\ktblaze\\res\\files\\KT protocols.xls");
-    xls::WorkBook foo(file,0);
+    std::cout << utility::to_string(std::wstring(L"困了")) << std::endl;
+
+#if 0
+    std::string file = std::string("E:\\Work\\Project\\ktblaze\\res\\files\\KT protocols.xls");
+    xls::WorkBook foo(file);
 
     xls::cellContent cell = foo.GetCell(0,1,2);
     foo.ShowCell(cell);

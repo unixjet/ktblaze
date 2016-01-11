@@ -75,7 +75,7 @@ namespace xls
 	public:
 #if XLS_WIDE_STRINGS == 0
 		// characterSet is the 8-bit encoding you want to convert 16-bit unicode strings to
-		WorkBook(const std::string& fileName, int debug=0, const char *characterSet="UTF-8");	
+                WorkBook(const std::string& fileName, int debug=0, const char *characterSet="");
 #else
 		// characterSet has to be UTF-8
 		WorkBook(const std::string& fileName, int debug=0);	
