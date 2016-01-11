@@ -13,7 +13,6 @@ io_service service;
 #define MEM_FN2(x,y,z) boost::bind(&self_type::x, shared_from_this(), y, z)
 
 
-
 #if 0
 class talk_to_svr : public boost::enable_shared_from_this<talk_to_svr> , boost::noncopyable
 {
