@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>browser_</class>
+ <widget class="QWidget" name="browser_">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>844</width>
+    <height>607</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Browser</string>
+  </property>
+  <widget class="QWidget" name="horizontalLayoutWidget">
+   <property name="geometry">
+    <rect>
+     <x>180</x>
+     <y>9</y>
+     <width>661</width>
+     <height>591</height>
+    </rect>
+   </property>
+   <layout class="QHBoxLayout" name="mainLayout_">
+    <item>
+     <widget class="QStackedWidget" name="stackedWidget">
+      <widget class="QWidget" name="mapPage_"/>
+      <widget class="QWidget" name="schedulePage_"/>
+      <widget class="QWidget" name="userPage_"/>
+      <widget class="QWidget" name="configPage_"/>
+      <widget class="QWidget" name="firmwarePage_"/>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QDockWidget" name="navigationDock_">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>20</y>
+     <width>161</width>
+     <height>581</height>
+    </rect>
+   </property>
+   <widget class="QWidget" name="dockWidgetContents">
+    <widget class="QWidget" name="verticalLayoutWidget">
+     <property name="geometry">
+      <rect>
+       <x>0</x>
+       <y>0</y>
+       <width>160</width>
+       <height>551</height>
+      </rect>
+     </property>
+     <layout class="QVBoxLayout" name="dockLayout_">
+      <item>
+       <widget class="QListWidget" name="navigationView_">
+        <item>
+         <property name="text">
+          <string>通信MAP</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>计划管理</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>用户管理</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>配置文件</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>固件管理</string>
+         </property>
+        </item>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </widget>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

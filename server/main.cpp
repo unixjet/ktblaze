@@ -1,10 +1,11 @@
-#include <QCoreApplication>
+//#include <QCoreApplication>
+#include <QApplication>
 #include <iostream>
 #include <talk_to_client.h>
 #include "XlsReader.h"
 #include "logger.hpp"
 #include "utility.h"
-
+#include "mainwindow.h"
 
 boost::asio::io_service service;
 
@@ -20,7 +21,7 @@ static void handle_accept(talk_to_client::ptr client, const boost::system::error
 
 int main(int argc, char *argv[])
 {
-    QCoreApplication a(argc, argv);
+    QApplication a(argc, argv);
 
 #if 0
     std::cout << "Server Run" << std::endl;
@@ -45,7 +46,8 @@ int main(int argc, char *argv[])
     BOOST_LOG_SEV(slg, warning) << "A warning severity message, will pass to the file";
     BOOST_LOG_SEV(slg, error) << "An error severity message, will pass to the file";
 
-    std::cout << utility::to_string(std::wstring(L"困了")) << std::endl;
+    MainWindow w;
+    w.show();
 
 #if 0
     std::string file = std::string("E:\\Work\\Project\\ktblaze\\res\\files\\KT protocols.xls");
@@ -64,8 +66,7 @@ int main(int argc, char *argv[])
     }
     std::cout << "parser done!" << std::endl;
 #endif
+
 //    service.run(); // and applicataion loop
-    a.exit(0);
-    return 0;
-//    return a.exec();
+    return a.exec();
 }
