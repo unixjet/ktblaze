@@ -11,6 +11,9 @@
 #include <boost/log/sources/logger.hpp>
 #include <boost/log/support/date_time.hpp>
 
+#include "Core/Object.h"
+#include "Core/Context.h"
+
 namespace logging = boost::log;
 namespace sinks = boost::log::sinks;
 namespace attrs = boost::log::attributes;
@@ -18,7 +21,7 @@ namespace src = boost::log::sources;
 namespace expr = boost::log::expressions;
 namespace keywords = boost::log::keywords;
 
-enum severity_level
+enum SeverityLevel
 {
     normal,
     notification,
@@ -29,7 +32,7 @@ enum severity_level
 
 template< typename CharT, typename TraitsT >
 inline std::basic_ostream< CharT, TraitsT >& operator<<
-(std::basic_ostream< CharT, TraitsT >& strm, severity_level lvl)
+(std::basic_ostream< CharT, TraitsT >& strm, SeverityLevel lvl)
 {
     static const char* const str[] =
     {
@@ -47,13 +50,18 @@ inline std::basic_ostream< CharT, TraitsT >& operator<<
 
 }
 
-class logger
+class Logger : public  Urho3D::Object
 {
-public:
-    logger() = default ;
-    ~logger() = default;
+    URHO3D_OBJECT(Logger, Urho3D::Object)
 
-    void start()
+public:
+
+    Logger(Urho3D::Context * context);
+
+
+    ~Logger();
+
+    void Start()
     {
         // The first thing we have to do to get using the library is
         // to set up the logging sinks - i.e. where the logs will be written to.
@@ -63,12 +71,12 @@ public:
         logging::add_file_log
         (
             "ktblaze.log",
-            keywords::filter = expr::attr< severity_level >("Severity") >= warning,
+            keywords::filter = expr::attr< SeverityLevel >("Severity") >= warning,
             keywords::format = expr::stream
                 << expr::format_date_time< boost::posix_time::ptime >("TimeStamp", "%Y-%m-%d, %H:%M:%S.%f")
                 << " [" << expr::format_date_time< attrs::timer::value_type >("Uptime", "%O:%M:%S")
                 << "] [" << expr::format_named_scope("Scope", keywords::format = "%n (%f:%l)")
-                << "] <" << expr::attr< severity_level >("Severity")
+                << "] <" << expr::attr< SeverityLevel >("Severity")
                 << "> " << expr::message
         /*
         keywords::format = expr::format("%1% [%2%] [%3%] <%4%> %5%")
@@ -86,18 +94,24 @@ public:
 
     }
 
-   void stop()
+   void Stop()
    {
        ;
    }
 
-   src::logger& get_logger() { return lg_;}
-   src::severity_logger<severity_level> & get_severitylog() { return slg_;}
+   static src::severity_logger<SeverityLevel> & ExportLogStream();
+
+//   src::logger& get_logger() { return lg_;}
+   src::severity_logger<SeverityLevel> & GetSeverityLog() { return slg_;}
 
 private:
    src::logger lg_;
-   src::severity_logger<severity_level> slg_;
+   src::severity_logger<SeverityLevel> slg_;
 };
+
+#define LOG_NORMAL BOOST_LOG_SEV(Logger::ExportLogStream(), normal)
+#define LOG_WARNING BOOST_LOG_SEV(Logger::ExportLogStream(), warning)
+#define LOG_ERROR BOOST_LOG_SEV(Logger::ExportLogStream(), error)
 
 #endif // LOGGER
 

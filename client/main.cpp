@@ -13,7 +13,7 @@ io_service service;
 #define MEM_FN2(x,y,z) boost::bind(&self_type::x, shared_from_this(), y, z)
 
 
-#if 0
+#if 1
 class talk_to_svr : public boost::enable_shared_from_this<talk_to_svr> , boost::noncopyable
 {
     typedef talk_to_svr self_type;
@@ -233,14 +233,41 @@ int main(int argc, char *argv[])
 
     ip::tcp::endpoint ep(ip::address::from_string("127.0.0.1"), 8001);
 
-#if 0
-    char * messages[] = {"Hello", "Hugo", "Smart Ready", 0};
-    for (char** message = messages; *message; ++message)
+#if 1
+//    char * messages[] = {"Hello", "Hugo", "Smart Ready", 0};
+//    for (char** message = messages; *message; ++message)
     {
-        talk_to_svr::start(ep, *message);
+		char packet[] = 
+		{
+			0x7E, // head
+			0x00, 0x00, //reserved 
+			0x00, 0x01, // instruction index 
+			0x00, 0x00, // recalculate instruction length  
+			0x01,       // 
+			0x04, 
+			0x05,       // opcode 
+			0x01,       // mask
+			0x02,       // 2 properties 
+			0x01,       // device ID 
+			0,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0, 0,0,0,0,1,
+			0x04, 
+			120,0,0,1,80,01,
+			0x0, // checksum,
+			0x7E
+		};
+
+		unsigned short instLen = sizeof packet - 9;
+		packet[5] = instLen << 8;
+		packet[6] = (0x00FF && instLen);
+		int checksumIndex = sizeof packet - 2;
+		packet[checksumIndex] = 0;
+		for (int i = 1; i < checksumIndex; ++i)
+			packet[checksumIndex] ^= packet[i];
+
+        talk_to_svr::start(ep, packet);
         boost::this_thread::sleep(boost::posix_time::millisec(1000));
     }
-#endif
+#else
 
     char* names[] = { "John", "James", "Lucy", "Tracy", "Frank", "Abby", 0 };
     for ( char ** name = names; *name; ++name)
@@ -248,9 +275,8 @@ int main(int argc, char *argv[])
        talk_to_svr::start(ep, *name);
        boost::this_thread::sleep( boost::posix_time::millisec(100));
     }
-
+#endif 
     service.run();
-//    return a.exec();
-    return 0;
+    return a.exec();
 }
 
